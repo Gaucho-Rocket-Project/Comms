@@ -2,7 +2,7 @@
 	(version 20241209)
 	(generator "kicad_symbol_editor")
 	(generator_version "9.0")
-	(symbol "ZEDFP9_module"
+	(symbol "ZEDF9P_module"
 		(exclude_from_sim no)
 		(in_bom yes)
 		(on_board yes)
@@ -14,7 +14,7 @@
 				)
 			)
 		)
-		(property "Value" "ZEDFP9"
+		(property "Value" "ZEDF9P"
 			(at 11.684 -24.638 0)
 			(effects
 				(font
@@ -49,7 +49,7 @@
 				(hide yes)
 			)
 		)
-		(symbol "ZEDFP9_module_0_1"
+		(symbol "ZEDF9P_module_0_1"
 			(rectangle
 				(start -13.97 22.86)
 				(end 13.97 -22.86)
@@ -62,7 +62,7 @@
 				)
 			)
 		)
-		(symbol "ZEDFP9_module_1_1"
+		(symbol "ZEDF9P_module_1_1"
 			(pin power_in line
 				(at -16.51 20.32 0)
 				(length 2.54)
