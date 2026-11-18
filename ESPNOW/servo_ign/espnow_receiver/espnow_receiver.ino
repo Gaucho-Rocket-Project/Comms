@@ -17,7 +17,8 @@
 #include <Arduino.h>
 #include <WiFi.h>
 #include <esp_now.h>
-#include <esp_wifi.h>     // esp_wifi_set_ps()
+#include <esp_wifi.h>     // esp_wifi_set_ps(), esp_wifi_get_mac()
+#include <esp_mac.h>      // esp_read_mac(), ESP_MAC_WIFI_STA
 #include <stddef.h>
 #include <string.h>
 
@@ -98,6 +99,40 @@ static bool macConfigured(const uint8_t *mac)
     if (mac[i] != 0xFF) allOnes = false;
   }
   return anyNonZero && !allOnes;
+}
+
+// WiFi.macAddress() can print 00:00:00:00:00:00 on Arduino-ESP32 3.x when the
+// STA interface has not started yet. Read the driver directly instead, with
+// the eFuse-derived station MAC as a fallback.
+static bool allZeroMac(const uint8_t *mac)
+{
+  for (uint8_t i = 0; i < 6; ++i)
+  {
+    if (mac[i] != 0) return false;
+  }
+  return true;
+}
+
+static bool readStaMac(uint8_t mac[6])
+{
+#if defined(ESP_ARDUINO_VERSION_MAJOR) && ESP_ARDUINO_VERSION_MAJOR >= 3
+  unsigned long startWait = millis();
+  while (!WiFi.STA.started() && (millis() - startWait) < 2000) delay(20);
+#endif
+  if (esp_wifi_get_mac(WIFI_IF_STA, mac) == ESP_OK && !allZeroMac(mac)) return true;
+  return esp_read_mac(mac, ESP_MAC_WIFI_STA) == ESP_OK && !allZeroMac(mac);
+}
+
+static void printMac(const char *label, const uint8_t mac[6])
+{
+  Serial.print(label);
+  for (uint8_t i = 0; i < 6; ++i)
+  {
+    if (i > 0) Serial.print(':');
+    if (mac[i] < 0x10) Serial.print('0');
+    Serial.print(mac[i], HEX);
+  }
+  Serial.println();
 }
 
 // LEDC wrapper: Arduino-ESP32 3.x addresses a channel by pin, 2.x by channel.
@@ -266,8 +301,9 @@ void setup()
   WiFi.disconnect();
   esp_wifi_set_ps(WIFI_PS_NONE);   // ESP-NOW reception is more reliable awake
 
-  Serial.print("Receiver MAC (copy into sender sketch): ");
-  Serial.println(WiFi.macAddress());
+  uint8_t myMac[6] = {};
+  if (readStaMac(myMac)) printMac("Receiver MAC (copy into sender sketch): ", myMac);
+  else Serial.println("Could not read receiver MAC");
 
   if (esp_now_init() != ESP_OK)
   {

@@ -71,6 +71,18 @@ and a series safety interlock in the igniter wiring.
    `1`, `2`, `3`, then `4` from the controller's Serial Monitor and watch the
    receiver log and the PWM outputs.
 
+### If the MAC prints as 00:00:00:00:00:00
+
+On Arduino-ESP32 3.x, `WiFi.macAddress()` can return all zeros when the STA
+interface has not started yet. Both sketches therefore read the STA MAC via
+`esp_wifi_get_mac()` (waiting briefly for `WiFi.STA.started()` on core 3.x),
+falling back to `esp_read_mac(ESP_MAC_WIFI_STA)`. If you still see zeros, check
+that the factory MAC is programmed (`esptool.py chip_id` / `efuse_summary`) and
+that you are flashing a genuine ESP32 with a supported board package. Never put
+the printed zeros into `RECEIVER_MAC` or `SENDER_MAC`: the sender refuses to
+start with an all-zero peer MAC, and the receiver rejects every packet when
+`ENFORCE_SENDER_MAC` is enabled.
+
 ## How a command works
 
 1. Controller builds an 18-byte packet with a magic word, random token, command
